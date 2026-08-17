@@ -1,0 +1,18 @@
+[package]
+name = "flowscripter_io_cli_hash_native"
+version = "0.1.0"
+edition = "2021"
+description = "Rust-backed sha256 hasher for flowscripter-io-cli, exposed via Bun FFI"
+homepage = "https://github.com/flowscripter"
+license = "MIT"
+repository = "https://github.com/flowscripter/flowscripter-io-cli-hash-native"
+exclude = [".github/"]
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+sha2 = "0.10"
+
+[dev-dependencies]
+hex = "0.4"

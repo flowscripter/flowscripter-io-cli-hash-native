@@ -1,0 +1,57 @@
+{
+  "name": "@flowscripter/flowscripter-io-cli-hash-native",
+  "version": "0.1.0",
+  "description": "Rust-backed sha256 hasher for flowscripter-io-cli, exposed via Bun FFI",
+  "keywords": [
+    "bun",
+    "ffi",
+    "hash",
+    "rust",
+    "sha256"
+  ],
+  "homepage": "https://github.com/flowscripter/flowscripter-io-cli-hash-native#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flowscripter/flowscripter-io-cli-hash-native.git"
+  },
+  "files": [
+    "dist",
+    "src",
+    "index.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "bun": "./index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "oxfmt": "0.57.0",
+    "oxlint": "1.72.0"
+  },
+  "peerDependencies": {
+    "typescript": "^6.0.3"
+  },
+  "ffiLibBaseUri": "https://github.com/flowscripter/flowscripter-io-cli-hash-native/releases/download/v0.1.0",
+  "typedocOptions": {
+    "readme": "none",
+    "exclude": [
+      "tests/**"
+    ]
+  }
+}
