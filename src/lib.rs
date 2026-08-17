@@ -36,7 +36,7 @@ pub extern "C" fn hasher_init() -> *mut HasherContext {
 /// passed to [`hasher_final`]. `data` must be valid for reads of `len`
 /// bytes for the duration of this call.
 #[no_mangle]
-pub extern "C" fn hasher_update(ctx: *mut HasherContext, data: *const u8, len: usize) {
+pub unsafe extern "C" fn hasher_update(ctx: *mut HasherContext, data: *const u8, len: usize) {
     if ctx.is_null() || data.is_null() {
         return;
     }
@@ -54,7 +54,7 @@ pub extern "C" fn hasher_update(ctx: *mut HasherContext, data: *const u8, len: u
 /// previously passed to `hasher_final`. `out` must be valid for writes of
 /// `DIGEST_LENGTH` bytes.
 #[no_mangle]
-pub extern "C" fn hasher_final(ctx: *mut HasherContext, out: *mut u8) {
+pub unsafe extern "C" fn hasher_final(ctx: *mut HasherContext, out: *mut u8) {
     if ctx.is_null() || out.is_null() {
         return;
     }
@@ -73,9 +73,11 @@ mod tests {
     fn hashes_known_vector() {
         let ctx = hasher_init();
         let data = b"hello";
-        hasher_update(ctx, data.as_ptr(), data.len());
         let mut out = [0u8; DIGEST_LENGTH];
-        hasher_final(ctx, out.as_mut_ptr());
+        unsafe {
+            hasher_update(ctx, data.as_ptr(), data.len());
+            hasher_final(ctx, out.as_mut_ptr());
+        }
 
         let expected =
             hex::decode("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824")
@@ -86,10 +88,12 @@ mod tests {
     #[test]
     fn hashes_across_multiple_updates() {
         let ctx = hasher_init();
-        hasher_update(ctx, b"hel".as_ptr(), 3);
-        hasher_update(ctx, b"lo".as_ptr(), 2);
         let mut out = [0u8; DIGEST_LENGTH];
-        hasher_final(ctx, out.as_mut_ptr());
+        unsafe {
+            hasher_update(ctx, b"hel".as_ptr(), 3);
+            hasher_update(ctx, b"lo".as_ptr(), 2);
+            hasher_final(ctx, out.as_mut_ptr());
+        }
 
         let expected =
             hex::decode("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824")
