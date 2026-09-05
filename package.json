@@ -1,6 +1,6 @@
 {
   "name": "@flowscripter/flowscripter-io-cli-hash-native",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Rust-backed sha256 hasher for flowscripter-io-cli, exposed via Bun FFI",
   "keywords": [
     "bun",
@@ -47,7 +47,7 @@
   "peerDependencies": {
     "typescript": "^7.0.2"
   },
-  "ffiLibBaseUri": "https://github.com/flowscripter/flowscripter-io-cli-hash-native/releases/download/v1.0.0",
+  "ffiLibBaseUri": "https://github.com/flowscripter/flowscripter-io-cli-hash-native/releases/download/v1.0.1",
   "typedocOptions": {
     "readme": "none",
     "exclude": [
