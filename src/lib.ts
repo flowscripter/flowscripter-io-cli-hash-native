@@ -29,7 +29,7 @@ export const DIGEST_LENGTH = 32;
  * buffer (`updatePointer()`).
  */
 export class Sha256Hasher {
-  #ctx: Pointer;
+  #ctx: Pointer | bigint;
   #finalized = false;
 
   constructor() {
