@@ -26,12 +26,8 @@ export async function getLibPath(libName: string) {
   // look in release build location
   const builtLibPath = path.join("target", "release", fullLibName);
 
-  console.debug(`builtLibPath: ${builtLibPath}`);
-
   const builtLibFile = Bun.file(builtLibPath);
   let exists = await builtLibFile.exists();
-
-  console.debug(`${builtLibPath} exists: ${exists}`);
 
   if (exists) {
     return builtLibPath;
@@ -44,18 +40,12 @@ export async function getLibPath(libName: string) {
 
   exists = await installedLibFile.exists();
 
-  console.debug(`${installedLibPath} exists: ${exists}`);
-
   if (exists) {
     return installedLibPath;
   }
 
-  console.debug(`packageJson.ffiLibBaseUri: ${packageJson.ffiLibBaseUri}`);
-
   const remoteLibName = buildRemoteLibName(libName, suffix, process.arch);
   const remotePath = buildRemoteUrl(packageJson.ffiLibBaseUri, remoteLibName);
-
-  console.debug(`remotePath: ${remotePath}`);
 
   await mkdir(installedLibFolder, { recursive: true });
 
