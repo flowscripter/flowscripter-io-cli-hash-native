@@ -54,7 +54,7 @@ dependencies = [
 
 [[package]]
 name = "flowscripter_io_cli_hash_native"
-version = "1.0.9"
+version = "1.0.10"
 dependencies = [
  "hex",
  "sha2",
