@@ -20,17 +20,31 @@ export function buildRemoteUrl(baseUri: string, remoteLibName: string): string {
   return new URL(remoteLibName, base).href;
 }
 
+export const DEV_BUILD_ENV_VAR = "FLOWSCRIPTER_HASH_NATIVE_DEV_BUILD";
+
+const PACKAGE_ROOT = path.resolve(import.meta.dirname, "..");
+
+export function buildDevLibPath(
+  fullLibName: string,
+  env: Record<string, string | undefined> = process.env,
+  packageRoot: string = PACKAGE_ROOT,
+): string | undefined {
+  if (env[DEV_BUILD_ENV_VAR] !== "1") return undefined;
+  return path.join(packageRoot, "target", "release", fullLibName);
+}
+
 export async function getLibPath(libName: string) {
   const fullLibName = buildLocalLibName(libName, suffix);
 
-  // look in release build location
-  const builtLibPath = path.join("target", "release", fullLibName);
+  // opt-in: look in the package's own release build location
+  const builtLibPath = buildDevLibPath(fullLibName);
+  let exists = false;
 
-  const builtLibFile = Bun.file(builtLibPath);
-  let exists = await builtLibFile.exists();
-
-  if (exists) {
-    return builtLibPath;
+  if (builtLibPath) {
+    exists = await Bun.file(builtLibPath).exists();
+    if (exists) {
+      return builtLibPath;
+    }
   }
 
   // look in release installed location
