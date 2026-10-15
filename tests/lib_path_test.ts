@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import os from "node:os";
 import path from "node:path";
 import {
   buildDevLibPath,
@@ -93,10 +94,10 @@ describe("buildDevLibPath", () => {
   test("default package root is absolute and independent of the working directory", () => {
     const original = process.cwd();
     try {
-      process.chdir("/tmp");
+      process.chdir(os.tmpdir());
       const result = buildDevLibPath("libfoo.so", { [DEV_BUILD_ENV_VAR]: "1" });
       expect(path.isAbsolute(result!)).toBe(true);
-      expect(result!.startsWith("/tmp/target")).toBe(false);
+      expect(result!.startsWith(path.join(process.cwd(), "target"))).toBe(false);
     } finally {
       process.chdir(original);
     }
