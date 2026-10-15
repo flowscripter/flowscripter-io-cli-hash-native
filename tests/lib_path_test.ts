@@ -1,5 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { buildLocalLibName, buildRemoteLibName, buildRemoteUrl } from "../src/lib-path.ts";
+import os from "node:os";
+import path from "node:path";
+import {
+  buildDevLibPath,
+  buildLocalLibName,
+  buildRemoteLibName,
+  buildRemoteUrl,
+  DEV_BUILD_ENV_VAR,
+} from "../src/lib-path.ts";
 
 describe("buildLocalLibName", () => {
   test("Linux .so gets lib prefix", () => {
@@ -65,5 +73,33 @@ describe("buildRemoteUrl", () => {
     expect(url).toBe(
       "https://github.com/flowscripter/template-bun-rust-library/releases/download/v1.1.5/x64.so",
     );
+  });
+});
+
+describe("buildDevLibPath", () => {
+  test("is disabled by default", () => {
+    expect(buildDevLibPath("libfoo.so", {})).toBeUndefined();
+  });
+
+  test("is disabled for values other than 1", () => {
+    expect(buildDevLibPath("libfoo.so", { [DEV_BUILD_ENV_VAR]: "true" })).toBeUndefined();
+  });
+
+  test("resolves relative to the package root when enabled", () => {
+    expect(buildDevLibPath("libfoo.so", { [DEV_BUILD_ENV_VAR]: "1" }, "/pkg")).toBe(
+      path.join("/pkg", "target", "release", "libfoo.so"),
+    );
+  });
+
+  test("default package root is absolute and independent of the working directory", () => {
+    const original = process.cwd();
+    try {
+      process.chdir(os.tmpdir());
+      const result = buildDevLibPath("libfoo.so", { [DEV_BUILD_ENV_VAR]: "1" });
+      expect(path.isAbsolute(result!)).toBe(true);
+      expect(result!.startsWith(path.join(process.cwd(), "target"))).toBe(false);
+    } finally {
+      process.chdir(original);
+    }
   });
 });

@@ -38,7 +38,9 @@ Test:
 
 `cargo test`
 
-`cargo build --release && bun test`
+`cargo build --release && FLOWSCRIPTER_HASH_NATIVE_DEV_BUILD=1 bun test`
+
+By default the native library is loaded from `~/.flowscripter/lib` (downloaded from the release if missing). Setting `FLOWSCRIPTER_HASH_NATIVE_DEV_BUILD=1` makes the package prefer its own `target/release` build instead.
 
 Format:
 
