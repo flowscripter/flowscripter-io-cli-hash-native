@@ -17,7 +17,9 @@ Add the module:
 Use the module:
 
 ```typescript
-import { Sha256Hasher } from "@flowscripter/flowscripter-io-cli-hash-native";
+import { initNativeLib, Sha256Hasher } from "@flowscripter/flowscripter-io-cli-hash-native";
+
+await initNativeLib();
 
 const hasher = new Sha256Hasher();
 hasher.update(new TextEncoder().encode("hello"));
@@ -40,7 +42,7 @@ Test:
 
 `cargo build --release && FLOWSCRIPTER_HASH_NATIVE_DEV_BUILD=1 bun test`
 
-By default the native library is loaded from `~/.flowscripter/lib` (downloaded from the release if missing). Setting `FLOWSCRIPTER_HASH_NATIVE_DEV_BUILD=1` makes the package prefer its own `target/release` build instead.
+By default the native library is loaded from `~/.flowscripter/lib` (downloaded from the release if missing or if it does not match its checksum). Setting `FLOWSCRIPTER_HASH_NATIVE_DEV_BUILD=1` makes the package prefer its own `target/release` build instead.
 
 Format:
 
@@ -59,6 +61,10 @@ Generate HTML API Documentation:
 ### Overview
 
 `Sha256Hasher` wraps a native Rust `sha2` implementation behind three `extern "C"` functions (`hasher_init`, `hasher_update`, `hasher_final`) loaded via `bun:ffi`'s `dlopen`.
+
+Importing the package has no side effects. `initNativeLib()` must be awaited before the first `Sha256Hasher` is created: it resolves, downloads and verifies the native library, then loads it once.
+
+Each release publishes a `<library file>.shasum` (SHA-256) sibling asset for every native library. A download is written to a temporary file, checked against that checksum and only then renamed into `~/.flowscripter/lib` along with its `.shasum`. An already installed library is verified against its `.shasum` before it is loaded, and `initNativeLib()` rejects if verification fails.
 
 `update()` accepts a JS-owned `Uint8Array` and passes a raw pointer straight into the synchronous Rust call using `bun:ffi`'s `ptr()` - no further copy is made once the bytes are in JS memory.
 

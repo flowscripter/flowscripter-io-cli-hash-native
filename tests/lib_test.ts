@@ -1,6 +1,39 @@
-import { describe, expect, test } from "bun:test";
+import { beforeAll, describe, expect, test } from "bun:test";
 import { ptr } from "bun:ffi";
-import { DIGEST_LENGTH, Sha256Hasher } from "../src/lib.ts";
+import { mkdtemp, readdir } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { DIGEST_LENGTH, initNativeLib, Sha256Hasher } from "../src/lib.ts";
+import { DEV_BUILD_ENV_VAR } from "../src/lib-path.ts";
+
+beforeAll(async () => {
+  process.env[DEV_BUILD_ENV_VAR] = "1";
+  await initNativeLib();
+});
+
+describe("initNativeLib", () => {
+  test("is idempotent", async () => {
+    await initNativeLib();
+    await initNativeLib();
+  });
+
+  test("importing the module has no side effects and the hasher requires init", async () => {
+    const home = await mkdtemp(path.join(os.tmpdir(), "hash-native-home-"));
+    const script = `
+      const { Sha256Hasher } = await import(${JSON.stringify(path.resolve(import.meta.dirname, "../src/lib.ts"))});
+      try { new Sha256Hasher(); console.log("no-throw"); } catch (e) { console.log(String(e.message)); }
+    `;
+    const proc = Bun.spawn([process.execPath, "-e", script], {
+      env: { PATH: process.env.PATH, HOME: home, USERPROFILE: home },
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const out = await new Response(proc.stdout).text();
+    expect(await proc.exited).toBe(0);
+    expect(out).toContain("initNativeLib()");
+    expect(await readdir(home)).not.toContain(".flowscripter");
+  });
+});
 
 function toHex(bytes: Uint8Array): string {
   return Array.from(bytes)

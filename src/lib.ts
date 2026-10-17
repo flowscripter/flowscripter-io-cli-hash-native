@@ -1,9 +1,7 @@
 import { dlopen, FFIType, ptr, type Pointer } from "bun:ffi";
 import { getLibPath } from "./lib-path.ts";
 
-const libPath = await getLibPath("flowscripter_io_cli_hash_native");
-
-const { symbols } = dlopen(libPath, {
+const SYMBOLS = {
   hasher_init: {
     args: [],
     returns: FFIType.ptr,
@@ -16,7 +14,29 @@ const { symbols } = dlopen(libPath, {
     args: [FFIType.ptr, FFIType.ptr],
     returns: FFIType.void,
   },
-});
+} as const;
+
+type NativeSymbols = ReturnType<typeof dlopen<typeof SYMBOLS>>["symbols"];
+
+let symbols: NativeSymbols | undefined;
+let initPromise: Promise<void> | undefined;
+
+/**
+ * Resolve, download (if needed), verify and load the native library.
+ *
+ * Must be awaited before using {@link Sha256Hasher}. Safe to call repeatedly; the library is
+ * loaded once. Rejects if the library cannot be obtained or fails checksum verification.
+ */
+export function initNativeLib(): Promise<void> {
+  initPromise ??= (async () => {
+    const libPath = await getLibPath("flowscripter_io_cli_hash_native");
+    symbols = dlopen(libPath, SYMBOLS).symbols;
+  })().catch((e) => {
+    initPromise = undefined;
+    throw e;
+  });
+  return initPromise;
+}
 
 export const DIGEST_LENGTH = 32;
 
@@ -29,10 +49,15 @@ export const DIGEST_LENGTH = 32;
  * buffer (`updatePointer()`).
  */
 export class Sha256Hasher {
+  #symbols: NativeSymbols;
   #ctx: Pointer | bigint;
   #finalized = false;
 
   constructor() {
+    if (!symbols) {
+      throw new Error("Native library not loaded: await initNativeLib() first");
+    }
+    this.#symbols = symbols;
     const ctx = symbols.hasher_init();
     if (!ctx) {
       throw new Error("Failed to initialise native hasher context");
@@ -45,7 +70,7 @@ export class Sha256Hasher {
     if (this.#finalized) {
       throw new Error("Hasher has already been finalized");
     }
-    symbols.hasher_update(this.#ctx, ptr(data), BigInt(data.byteLength));
+    this.#symbols.hasher_update(this.#ctx, ptr(data), BigInt(data.byteLength));
   }
 
   /**
@@ -57,7 +82,7 @@ export class Sha256Hasher {
     if (this.#finalized) {
       throw new Error("Hasher has already been finalized");
     }
-    symbols.hasher_update(this.#ctx, dataPtr as unknown as Pointer, BigInt(length));
+    this.#symbols.hasher_update(this.#ctx, dataPtr as unknown as Pointer, BigInt(length));
   }
 
   /** Finalizes the hash and returns the digest. The hasher cannot be reused after this. */
@@ -67,7 +92,7 @@ export class Sha256Hasher {
     }
     this.#finalized = true;
     const out = new Uint8Array(DIGEST_LENGTH);
-    symbols.hasher_final(this.#ctx, ptr(out));
+    this.#symbols.hasher_final(this.#ctx, ptr(out));
     return out;
   }
 }
